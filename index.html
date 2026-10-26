@@ -1,0 +1,134 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#08111f">
+  <title>WAHYU AI</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: Arial, sans-serif;
+      background: #08111f; color: white;
+    }
+    header {
+      padding: 18px; background: #101e33;
+      display: flex; align-items: center; gap: 12px;
+      border-bottom: 1px solid #263750;
+    }
+    .logo {
+      background: #1677ff; padding: 12px 15px;
+      border-radius: 12px; font-weight: bold;
+    }
+    h2, p { margin-top: 0; }
+    header p { margin: 5px 0 0; color: #a9bfd9; }
+    main { max-width: 800px; margin: auto; padding: 18px; }
+    #chat {
+      min-height: 60vh; display: flex;
+      flex-direction: column; gap: 14px;
+    }
+    .message {
+      padding: 13px 16px; border-radius: 14px;
+      white-space: pre-wrap; overflow-wrap: anywhere;
+      line-height: 1.6;
+    }
+    .bot { background: #14243b; align-self: flex-start; max-width: 95%; }
+    .user { background: #1769e0; align-self: flex-end; max-width: 90%; }
+    form {
+      display: flex; gap: 8px; padding: 8px;
+      background: #14243b; border: 1px solid #304662;
+      border-radius: 15px;
+    }
+    input {
+      flex: 1; min-width: 0; padding: 12px;
+      color: white; background: transparent;
+      border: 0; outline: none; font-size: 16px;
+    }
+    button {
+      padding: 12px 16px; border: 0; border-radius: 10px;
+      background: #1677ff; color: white; cursor: pointer;
+    }
+    button:disabled { opacity: .5; }
+    .note { color: #8da3bf; text-align: center; font-size: 12px; }
+    .composer { position: sticky; bottom: 0; background: #08111f; padding: 12px 0; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">W</div>
+    <div>
+      <h2 style="margin-bottom:0">WAHYU AI</h2>
+      <p>Asisten AI pribadi kamu</p>
+    </div>
+  </header>
+
+  <main>
+    <div id="chat" aria-live="polite">
+      <div class="message bot">
+        Halo! 👋 Saya WAHYU AI.
+        Apa yang ingin kamu tanyakan?
+      </div>
+    </div>
+    <div class="composer">
+      <form id="form">
+        <input id="prompt" maxlength="4000"
+          placeholder="Tulis pertanyaan kamu..." required>
+        <button id="send" type="submit">Kirim</button>
+      </form>
+      <p class="note">Jangan kirim kata sandi atau informasi rahasia.</p>
+    </div>
+  </main>
+
+  <script>
+    // Ganti dengan URL backend kamu setelah deploy.
+    const API_URL = "https://GANTI-DENGAN-URL-BACKEND.onrender.com/api/chat";
+
+    const form = document.getElementById("form");
+    const input = document.getElementById("prompt");
+    const chat = document.getElementById("chat");
+    const send = document.getElementById("send");
+
+    function addMessage(text, type) {
+      const div = document.createElement("div");
+      div.className = "message " + type;
+      div.textContent = text;
+      chat.appendChild(div);
+      div.scrollIntoView({ behavior: "smooth", block: "end" });
+      return div;
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const message = input.value.trim();
+      if (!message || send.disabled) return;
+
+      addMessage(message, "user");
+      input.value = "";
+      send.disabled = true;
+      const loading = addMessage("WAHYU AI sedang berpikir...", "bot");
+
+      try {
+        const response = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message })
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || "Permintaan gagal.");
+        }
+        loading.textContent = data.reply || "AI tidak memberikan jawaban.";
+      } catch (error) {
+        loading.textContent =
+          "Gagal terhubung. Periksa URL backend, koneksi, dan status API.";
+        console.error(error);
+      } finally {
+        send.disabled = false;
+        input.focus();
+      }
+    });
+  </script>
+</body>
+</html>
